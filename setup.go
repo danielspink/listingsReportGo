@@ -2,13 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var exportDirectory string
 var option string
 var store string
 var month string
@@ -17,7 +15,6 @@ var year string
 func setup() {
 	loadFlags()
 	processDates()
-	exportDirectory = fmt.Sprintf("C:\\CODE\\python\\ListingsReport\\output\\jsons\\%s\\%s", year, month)
 }
 
 func loadFlags() {

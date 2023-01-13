@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func storeNumbersFromJson(path string) (storeResult storeNumbers) {
+func storeNumbersFromMongo(path string) (storeResult storeNumbers) {
 	var stor storeNumbers
 
 	jsonF, err := os.Open(path)
