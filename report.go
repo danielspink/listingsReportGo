@@ -12,32 +12,27 @@ func buildReportbase(stores []storeNumbers) {
 	filename := "Listings_" + year + ".xlsx"
 	xlsx := excelize.NewFile()
 
-	xlsx.SetSheetName("Sheet1", "Main")
+	makeSheets(xlsx, stores)
+	indexes := makeRowIndxs(xlsx, stores)
+	// fmt.Print(indexes)
 
 	for _, data := range stores {
 		storeSheet := strings.Title(data.Store)
-		xlsx.NewSheet(storeSheet)
-		xlsx.SetColWidth(storeSheet, "A", "A", 25)
 
-		makeDataTables(xlsx, storeSheet, data)
+		makeDataTables(xlsx, storeSheet, data, indexes)
+		// 	insertDataToTablesByMonth(xlsx, storeSheet, data.Parents, indexes)
+		// 	insertDataToTablesByMonth(xlsx, storeSheet, data.Brands, indexes)
+		// 	insertDataToTablesByMonth(xlsx, storeSheet, data.Variations, indexes)
 	}
 
-	// cellindx := 2
-	// textformat := format(xlsx, "purpleTextCenter")
-	//build parents//
-	// for _, arr := range data.Parents {
-	// insertDataToExcel(xlsx, storeSheet, "B"+strconv.Itoa(cellindx), "B"+strconv.Itoa(cellindx), textformat, arr.Name)
-	// insertDataToExcel(xlsx, storeSheet, "C"+strconv.Itoa(cellindx), "C"+strconv.Itoa(cellindx), textformat, strconv.Itoa(arr.Value))
-	// cellindx++
-	// }
 	if err := xlsx.SaveAs(filename); err != nil {
 		fmt.Println(err)
 	}
 }
 
-func makeDataTables(xlsx *excelize.File, sheet string, data storeNumbers) {
+func makeDataTables(xlsx *excelize.File, sheet string, data storeNumbers, indexes map[string]map[string]tablePosition) {
 	//First Column of the sheet with the product Keynames
-
+	currentStore := strings.Title(data.Store)
 	// BLUE TABLE //
 	rowIndx := 1
 	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "C"+strconv.Itoa(rowIndx), format(xlsx, "mainTitleCenter"), strings.ToUpper(data.Store))
@@ -55,57 +50,83 @@ func makeDataTables(xlsx *excelize.File, sheet string, data storeNumbers) {
 	rowIndx++
 	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "purpleTextTop"), "")
 	rowIndx++
-	for indx, item := range data.Parents {
-		switch numType(indx) {
-		case "Even":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "purpleTextMid"), item.Name)
-			rowIndx++
-		case "Odd":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), item.Name)
-			rowIndx++
-		}
+	for _, item := range data.Parents {
+		currentRow := indexes[currentStore][item.Name].Position
+		currentformat := indexes[currentStore][item.Name].Format
+		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(currentRow), "A"+strconv.Itoa(currentRow), currentformat, item.Name)
+		// switch numType(indx) {
+		// case "Even":
+		// 	currentformat := format(xlsx, "purpleTextMid")
+		// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+		// 	indexes[item.Name] = tablePosition{rowIndx, currentformat}
+		// 	rowIndx++
+		// case "Odd":
+		// 	currentformat := format(xlsx, "normalTextLeft")
+		// 	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+		// 	indexes[item.Name] = tablePosition{rowIndx, currentformat}
+		// 	rowIndx++
+		// }
 	}
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "purpleTextBottom"), "All")
-	rowIndx = rowIndx + 2
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "purpleTextBottom"), "All")
+	// rowIndx = rowIndx + 2
 
 	// GREEN TABLE //
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), "Brands")
-	rowIndx++
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "greenTextTop"), "")
-	rowIndx++
-	for indx, item := range data.Brands {
-		switch numType(indx) {
-		case "Even":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "greenTextMid"), item.Name)
-			rowIndx++
-		case "Odd":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), item.Name)
-			rowIndx++
-		}
-	}
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "greenTextBottom"), "All")
-	rowIndx = rowIndx + 2
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), "Brands")
+	// rowIndx++
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "greenTextTop"), "")
+	// rowIndx++
+	// for indx, item := range data.Brands {
+	// 	switch numType(indx) {
+	// 	case "Even":
+	// 		currentformat := format(xlsx, "greenTextMid")
+	// 		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+	// 		indexes[item.Name] = tablePosition{rowIndx, currentformat}
+	// 		rowIndx++
+	// 	case "Odd":
+	// 		currentformat := format(xlsx, "normalTextLeft")
+	// 		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+	// 		indexes[item.Name] = tablePosition{rowIndx, currentformat}
+	// 		rowIndx++
+	// 	}
+	// }
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "greenTextBottom"), "All")
+	// rowIndx = rowIndx + 2
 
-	// ORANGE TABLE //
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), "Variations")
-	rowIndx++
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "orangeTextTop"), "")
-	rowIndx++
-	for indx, item := range data.Variations {
-		switch numType(indx) {
-		case "Even":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "orangeTextMid"), item.Name)
-			rowIndx++
-		case "Odd":
-			insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), item.Name)
-			rowIndx++
-		}
-	}
-	insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "orangeTextBottom"), "All")
-
+	// // ORANGE TABLE //
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "normalTextLeft"), "Variations")
+	// rowIndx++
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "orangeTextTop"), "")
+	// rowIndx++
+	// for indx, item := range data.Variations {
+	// 	switch numType(indx) {
+	// 	case "Even":
+	// 		currentformat := format(xlsx, "orangeTextMid")
+	// 		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+	// 		indexes[item.Name] = tablePosition{rowIndx, currentformat}
+	// 		rowIndx++
+	// 	case "Odd":
+	// 		currentformat := format(xlsx, "normalTextLeft")
+	// 		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), currentformat, item.Name)
+	// 		indexes[item.Name] = tablePosition{rowIndx, currentformat}
+	// 		rowIndx++
+	// 	}
+	// }
+	// insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(rowIndx), "A"+strconv.Itoa(rowIndx), format(xlsx, "orangeTextBottom"), "All")
 }
 
-func insertDataToExcel(xlsx *excelize.File, sheet string, firstCol string, lastCol string, format int, text string) {
+func insertDataToTablesByMonth(xlsx *excelize.File, sheet string, values []storeNumber, indexes map[string]tablePosition) {
+	for _, item := range values {
+		cellColumn := reportSkeleton["current"].Listings
+		cellRow := indexes[item.Name].Position
+		cellFormat := indexes[item.Name].Format
+		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, item.Value)
+
+		cellColumn = reportSkeleton["current"].Sales
+		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, item.Sales)
+	}
+}
+
+func insertDataToExcel(xlsx *excelize.File, sheet string, firstCol string, lastCol string, format int, text interface{}) {
 	xlsx.SetCellValue(sheet, firstCol, text)
 	xlsx.MergeCell(sheet, firstCol, lastCol)
 	xlsx.SetCellStyle(sheet, firstCol, lastCol, format)
@@ -178,7 +199,7 @@ func format(xlsx *excelize.File, format string) int {
 	formats["blueTextBottom"] = blueTextBottom
 
 	purpleTextTop, _ := xlsx.NewStyle(`{
-		"font":{"color":"#000000","size":11,"bold":false},
+		"font":{"color":"#FFFFFF","size":11,"bold":false},
 		"fill":{"type":"pattern","color":["##8989eb"],"pattern":1},
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"left","wrap_text":false}
 	}`)
@@ -199,7 +220,7 @@ func format(xlsx *excelize.File, format string) int {
 	formats["purpleTextBottom"] = purpleTextBottom
 
 	greenTextTop, _ := xlsx.NewStyle(`{
-		"font":{"color":"#000000","size":11,"bold":false},
+		"font":{"color":"#FFFFFF","size":11,"bold":false},
 		"fill":{"type":"pattern","color":["#6aa84f"],"pattern":1},
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"left","wrap_text":false}
 	}`)
@@ -220,7 +241,7 @@ func format(xlsx *excelize.File, format string) int {
 	formats["greenTextBottom"] = greenTextBottom
 
 	orangeTextTop, _ := xlsx.NewStyle(`{
-		"font":{"color":"#000000","size":11,"bold":false},
+		"font":{"color":"#FFFFFF","size":11,"bold":false},
 		"fill":{"type":"pattern","color":["#ff9900"],"pattern":1},
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"left","wrap_text":false}
 	}`)
@@ -248,5 +269,14 @@ func numType(num int) string {
 		return "Even"
 	} else {
 		return "Odd"
+	}
+}
+
+func makeSheets(xlsx *excelize.File, stores []storeNumbers) {
+	xlsx.SetSheetName("Sheet1", "Main")
+	for _, data := range stores {
+		storeSheet := strings.Title(data.Store)
+		xlsx.NewSheet(storeSheet)
+		xlsx.SetColWidth(storeSheet, "A", "A", 25)
 	}
 }

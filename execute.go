@@ -56,6 +56,7 @@ func getStoreDataByYear(year string) (stores []storeNumbers) {
 	matchStage := bson.D{
 		{Key: "$match", Value: bson.D{
 			{Key: "year", Value: year},
+			{Key: "store", Value: "walmart"},
 		}},
 	}
 	projectStage := bson.D{{Key: "$project", Value: bson.D{

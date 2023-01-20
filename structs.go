@@ -5,6 +5,7 @@ package main
 type storeNumber struct {
 	Name  string `json:"name" bson:"name"`
 	Value int    `json:"value" bson:"value"`
+	Sales int    `json:"sales" bson:"sales"`
 }
 
 type storeNumbers struct {
@@ -16,5 +17,20 @@ type storeNumbers struct {
 	Variations []storeNumber `json:"variations" bson:"variations"`
 }
 
-type tablePositions struct {
+// STRUCTS TO KEEP TAB OF PRODUCT EXCEL ROW //
+
+type tablePosition struct {
+	// Name     string `json:"name" bson:"name"`
+	Position int `json:"position" bson:"position"`
+	Format   int `json:"format" bson:"format"`
+}
+
+// EXCEL SKELETON //
+
+type monthColumns struct {
+	Listings   string
+	Sales      string
+	Percentage string
+	Conversion string
+	Separator  string
 }
