@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -16,6 +15,8 @@ func buildReportbase(stores []storeNumbers) {
 	makeSheets(xlsx, stores)
 	makeFormats(xlsx)
 	indexes := makeRowIndxs(xlsx, stores)
+	mainIndxs := mainSheetIndexes(stores)
+	makeMainSheet(xlsx, stores, mainIndxs)
 
 	for _, data := range stores {
 		storeSheet := strings.Title(data.Store)
@@ -23,6 +24,7 @@ func buildReportbase(stores []storeNumbers) {
 		makeDataTables(xlsx, storeSheet, data, indexes)
 		insertDataToTablesByMonth(xlsx, storeSheet, data, indexes[storeSheet])
 	}
+	xlsx.SetActiveSheet(0)
 
 	if err := xlsx.SaveAs(filename); err != nil {
 		fmt.Println(err)
@@ -42,49 +44,63 @@ func makeDataTables(xlsx *excelize.File, sheet string, data storeNumbers, indexe
 
 func insertDataToTablesByMonth(xlsx *excelize.File, sheet string, data storeNumbers, indexes map[string]tablePosition) {
 	insertHeaders(xlsx, sheet, data, indexes)
-	processStoreData(xlsx, sheet, data.Month, data.Parents, indexes)
-	processStoreData(xlsx, sheet, data.Month, data.Brands, indexes)
-	processStoreData(xlsx, sheet, data.Month, data.Variations, indexes)
+	processStoreData(xlsx, sheet, data.MonthName, data.Parents, indexes)
+	processStoreData(xlsx, sheet, data.MonthName, data.Brands, indexes)
+	processStoreData(xlsx, sheet, data.MonthName, data.Variations, indexes)
 }
 
 func insertHeaders(xlsx *excelize.File, sheet string, data storeNumbers, indexes map[string]tablePosition) {
 	for name, value := range indexes {
 		if strings.Contains(name, "Header") {
-			cellColumn := reportSkeleton[data.Month].Listings
+			cellColumn := reportSkeleton[data.MonthName].Listings
 			cellRow := value.Position
 			cellFormat := value.Format
-			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.Month))+3)
-			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.Month)
+			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.MonthName))+3)
+			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.MonthName)
 
-			cellColumn = reportSkeleton[data.Month].Sales
-			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.Month+" Sales"))+3)
-			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.Month+" Sales")
+			cellColumn = reportSkeleton[data.MonthName].Sales
+			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.MonthName+" Sales"))+3)
+			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.MonthName+" Sales")
 
-			cellColumn = reportSkeleton[data.Month].Percentage
+			cellColumn = reportSkeleton[data.MonthName].Percentage
 			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "%")
 
-			cellColumn = reportSkeleton[data.Month].Conversion
+			cellColumn = reportSkeleton[data.MonthName].Conversion
 			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len("Conversion"))+3)
 			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "Conversion")
 
-			cellColumn = reportSkeleton[data.Month].Separator
+			cellColumn = reportSkeleton[data.MonthName].Separator
 			xlsx.SetColWidth(sheet, cellColumn, cellColumn, 2.00)
 			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
 		} else if strings.Contains(name, "Bottom") {
-			cellColumn := reportSkeleton[data.Month].Listings
 			cellRow := value.Position
 			cellFormat := value.Format
-			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.Month))+3)
+
+			cellColumn := reportSkeleton[data.MonthName].Percentage
+			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
+
+			cellColumn = reportSkeleton[data.MonthName].Listings
+			xlsx.SetColWidth(sheet, cellColumn, cellColumn, float64(len(data.MonthName))+3)
+
+			switch name {
+			case "mainBottom":
+				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalBrands)
+				cellColumn = reportSkeleton[data.MonthName].Percentage
+				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, fmt.Sprintf("%.2f%%", data.SalesPercentage))
+			case "parentBottom":
+				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalParents)
+			case "brandBottom":
+				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalBrands)
+			case "variationBottom":
+				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalVariations)
+			}
+
+			cellColumn = reportSkeleton[data.MonthName].Sales
 			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalSales)
 
-			cellColumn = reportSkeleton[data.Month].Sales
-			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, data.TotalSales)
-
-			cellColumn = reportSkeleton[data.Month].Percentage
-			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
-			cellColumn = reportSkeleton[data.Month].Conversion
-			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
-			cellColumn = reportSkeleton[data.Month].Separator
+			cellColumn = reportSkeleton[data.MonthName].Conversion
+			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, fmt.Sprintf("%.2f%%", data.SalesConversion))
+			cellColumn = reportSkeleton[data.MonthName].Separator
 			insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
 		}
 	}
@@ -101,37 +117,14 @@ func processStoreData(xlsx *excelize.File, sheet string, month string, value []s
 		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, item.Sales)
 
 		cellColumn = reportSkeleton[month].Percentage
-		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, item.Percentage)
+		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, fmt.Sprintf("%.2f%%", item.Percentage))
 
 		cellColumn = reportSkeleton[month].Conversion
-		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, item.Conversion)
+		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, fmt.Sprintf("%.2f%%", item.Conversion))
 
 		cellColumn = reportSkeleton[month].Separator
 		cellFormat = indexes[item.Name].Separator
 		insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
-	}
-
-	for name, value := range indexes {
-		cellColumn := reportSkeleton[month].Listings
-		cellRow := value.Position
-		cellFormat := value.Format
-		emptyCheck := xlsx.GetCellValue(sheet, cellColumn+strconv.Itoa(cellRow))
-		searchTitle := regexp.MustCompile(`Header$|Bottom$|Title$`)
-		if searchTitle.MatchString(name) {
-		} else {
-			if emptyCheck == "" {
-				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, 0)
-				cellColumn = reportSkeleton[month].Sales
-				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, 0)
-				cellColumn = reportSkeleton[month].Percentage
-				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, 0)
-				cellColumn = reportSkeleton[month].Conversion
-				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, 0)
-				cellFormat = value.Separator
-				cellColumn = reportSkeleton[month].Separator
-				insertDataToExcel(xlsx, sheet, cellColumn+strconv.Itoa(cellRow), cellColumn+strconv.Itoa(cellRow), cellFormat, "")
-			}
-		}
 	}
 }
 
@@ -187,7 +180,7 @@ func format(xlsx *excelize.File, format string) int {
 	formats["purpleTextCenter"] = purpleTextCenter
 
 	mainTitleCenter, _ := xlsx.NewStyle(`{
-		"font":{"color":"#ffffff","size":18,"bold":false},
+		"font":{"color":"#ffffff","size":25,"bold":false},
 		"fill":{"type":"pattern","color":["#4A86E8"],"pattern":1},
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"center","wrap_text":false}
 	}`)
@@ -199,6 +192,13 @@ func format(xlsx *excelize.File, format string) int {
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"left","wrap_text":false}
 	}`)
 	formats["blueTextTop"] = blueTextTop
+
+	blueTextMid, _ := xlsx.NewStyle(`{
+		"font":{"color":"#000000","size":11,"bold":false},
+		"fill":{"type":"pattern","color":["#e8f0fe"],"pattern":1},
+		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"left","wrap_text":false}
+	}`)
+	formats["blueTextMid"] = blueTextMid
 
 	blueTextBottom, _ := xlsx.NewStyle(`{
 		"font":{"color":"#000000","size":11,"bold":false},

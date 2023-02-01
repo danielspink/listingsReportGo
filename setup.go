@@ -8,6 +8,8 @@ import (
 
 var reportSkeleton = make(map[string]monthColumns)
 var Formats = make(map[string]int)
+
+// var MainSheetInfo
 var option string
 var store string
 var month string

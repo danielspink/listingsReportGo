@@ -12,10 +12,15 @@ type storeNumber struct {
 
 type storeNumbers struct {
 	Store           string        `json:"store" bson:"store"`
-	Month           string        `json:"monthname" bson:"monthname"`
+	Month           int           `json:"month" bson:"month"`
+	MonthName       string        `json:"monthname" bson:"monthname"`
 	Year            int           `json:"year" bson:"year"`
 	TotalSales      int           `json:"totalsales" bson:"totalsales"`
+	TotalParents    int           `json:"totalparents" bson:"totalparents"`
+	TotalBrands     int           `json:"totalbrands" bson:"totalbrands"`
+	TotalVariations int           `json:"totalvariations" bson:"totalvariations"`
 	SalesPercentage float64       `json:"salespercentage" bson:"salespercentage"`
+	SalesConversion float64       `json:"salesconversion" bson:"salesconversion"`
 	Parents         []storeNumber `json:"parents" bson:"parents"`
 	Brands          []storeNumber `json:"brands" bson:"brands"`
 	Variations      []storeNumber `json:"variations" bson:"variations"`

@@ -8,57 +8,57 @@ import (
 	"github.com/360EntSecGroup-Skylar/excelize"
 )
 
-func currentStoreTable(store []storeNumbers) {
-	/// Armar la current table del excel
-}
-
 func makeRowIndxs(xlsx *excelize.File, data []storeNumbers) map[string]map[string]tablePosition {
+
 	indexes := make(map[string]map[string]tablePosition)
 	storeproducts := make(map[string]map[string]map[string]int)
 
 	// Junta la informacion de la tienda para armar la tabla completa //
 	for _, store := range data {
-		currentSheet := store.Store
-		if _, storeExists := storeproducts[currentSheet]; storeExists {
-		} else {
-			storeproducts[currentSheet] = make(map[string]map[string]int)
-		}
-		if _, parentsExist := storeproducts[currentSheet]["Parents"]; parentsExist {
-		} else {
-			storeproducts[currentSheet]["Parents"] = make(map[string]int)
-			storeproducts[currentSheet]["Brands"] = make(map[string]int)
-			storeproducts[currentSheet]["Variations"] = make(map[string]int)
-		}
-		for _, parent := range store.Parents {
-			if _, parentNameExists := storeproducts[currentSheet]["Parents"]; parentNameExists {
-				storeproducts[currentSheet]["Parents"][parent.Name] += parent.Sales
+		if store.MonthName != "current" {
+			currentSheet := store.Store
+			if _, storeExists := storeproducts[currentSheet]; storeExists {
 			} else {
-				storeproducts[currentSheet]["Parents"][parent.Name] = parent.Sales
+				storeproducts[currentSheet] = make(map[string]map[string]int)
 			}
-		}
-		for _, brand := range store.Brands {
-			if _, brandNameExists := storeproducts[currentSheet]["Brands"]; brandNameExists {
-				storeproducts[currentSheet]["Brands"][brand.Name] += brand.Sales
+			if _, parentsExist := storeproducts[currentSheet]["Parents"]; parentsExist {
 			} else {
-				storeproducts[currentSheet]["Brands"][brand.Name] = brand.Sales
+				storeproducts[currentSheet]["Parents"] = make(map[string]int)
+				storeproducts[currentSheet]["Brands"] = make(map[string]int)
+				storeproducts[currentSheet]["Variations"] = make(map[string]int)
 			}
-		}
-		for _, variation := range store.Variations {
-			if _, brandNameExists := storeproducts[currentSheet]["Variations"]; brandNameExists {
-				storeproducts[currentSheet]["Variations"][variation.Name] += variation.Sales
-			} else {
-				storeproducts[currentSheet]["Variations"][variation.Name] = variation.Sales
+			for _, parent := range store.Parents {
+				if _, parentNameExists := storeproducts[currentSheet]["Parents"]; parentNameExists {
+					storeproducts[currentSheet]["Parents"][parent.Name] += parent.Sales
+				} else {
+					storeproducts[currentSheet]["Parents"][parent.Name] = parent.Sales
+				}
+			}
+			for _, brand := range store.Brands {
+				if _, brandNameExists := storeproducts[currentSheet]["Brands"]; brandNameExists {
+					storeproducts[currentSheet]["Brands"][brand.Name] += brand.Sales
+				} else {
+					storeproducts[currentSheet]["Brands"][brand.Name] = brand.Sales
+				}
+			}
+			for _, variation := range store.Variations {
+				if _, brandNameExists := storeproducts[currentSheet]["Variations"]; brandNameExists {
+					storeproducts[currentSheet]["Variations"][variation.Name] += variation.Sales
+				} else {
+					storeproducts[currentSheet]["Variations"][variation.Name] = variation.Sales
+				}
 			}
 		}
 	}
 
-	// Asigna el numero de fila y el formato de cada producto y
+	// Asigna el numero de fila y el formato de cada producto
 	for store, item := range storeproducts {
 		currentSheet := strings.Title(store)
 		if _, storeOk := indexes[currentSheet]; storeOk {
 		} else {
 			indexes[currentSheet] = make(map[string]tablePosition)
 		}
+
 		indexes[currentSheet]["mainTitle"] = tablePosition{"Listings", 3, Formats["normalTextLeft"], Formats["normalTextLeft"]}
 		indexes[currentSheet]["mainHeader"] = tablePosition{"", 4, Formats["blueTextTop"], Formats["blueTextTop"]}
 		indexes[currentSheet]["mainBottom"] = tablePosition{currentSheet, 5, Formats["blueTextBottom"], Formats["blueTextTop"]}
@@ -80,6 +80,7 @@ func makeRowIndxs(xlsx *excelize.File, data []storeNumbers) map[string]map[strin
 				rowIndx++
 			}
 		}
+
 		indexes[currentSheet]["parentBottom"] = tablePosition{"All", rowIndx, Formats["purpleTextBottom"], Formats["purpleTextTop"]}
 		rowIndx = rowIndx + 2
 		indexes[currentSheet]["brandTitle"] = tablePosition{"Brands", rowIndx, Formats["normalTextLeft"], Formats["normalTextLeft"]}
@@ -135,7 +136,9 @@ func sortMapValues(inMap map[string]int) []string {
 
 func makeFormats(xlsx *excelize.File) {
 	Formats = map[string]int{
+		"mainTitleCenter":  format(xlsx, "blueTextTop"),
 		"blueTextTop":      format(xlsx, "blueTextTop"),
+		"blueTextMid":      format(xlsx, "blueTextMid"),
 		"blueTextBottom":   format(xlsx, "blueTextBottom"),
 		"purpleTextTop":    format(xlsx, "purpleTextTop"),
 		"purpleTextMid":    format(xlsx, "purpleTextMid"),
@@ -154,10 +157,10 @@ func percentajeRatesByMonth(data []storeNumbers) []storeNumbers {
 	monthlysales := make(map[string]int)
 
 	for storindx, store := range data {
-		if _, monthExists := monthlysales[store.Month]; monthExists {
-			monthlysales[store.Month] += store.TotalSales
+		if _, monthExists := monthlysales[store.MonthName]; monthExists {
+			monthlysales[store.MonthName] += store.TotalSales
 		} else {
-			monthlysales[store.Month] = store.TotalSales
+			monthlysales[store.MonthName] = store.TotalSales
 		}
 
 		if store.TotalSales > 0 {
@@ -165,25 +168,38 @@ func percentajeRatesByMonth(data []storeNumbers) []storeNumbers {
 				if parent.Sales > 0 {
 					percentageRate := (float64(parent.Sales) * 100) / float64(store.TotalSales)
 					data[storindx].Parents[indx].Percentage = roundFloat(percentageRate, 2)
+
+					conversionRate := (float64(parent.Sales) * 100) / float64(parent.Listings)
+					data[storindx].Parents[indx].Conversion = roundFloat(conversionRate, 2)
 				}
 			}
 			for indx, brand := range store.Brands {
 				if brand.Sales > 0 {
 					percentageRate := (float64(brand.Sales) * 100) / float64(store.TotalSales)
 					data[storindx].Brands[indx].Percentage = roundFloat(percentageRate, 2)
+
+					conversionRate := (float64(brand.Sales) * 100) / float64(brand.Listings)
+					data[storindx].Brands[indx].Conversion = roundFloat(conversionRate, 2)
 				}
 			}
 			for indx, variation := range store.Variations {
 				if variation.Sales > 0 {
 					percentageRate := (float64(variation.Sales) * 100) / float64(store.TotalSales)
 					data[storindx].Variations[indx].Percentage = roundFloat(percentageRate, 2)
+
+					conversionRate := (float64(variation.Sales) * 100) / float64(variation.Listings)
+					data[storindx].Variations[indx].Conversion = roundFloat(conversionRate, 2)
 				}
 			}
 		}
 	}
+
 	for storindx, store := range data {
-		percentageRate := ((float64(store.TotalSales) * 100) / float64(monthlysales[store.Month]))
+		percentageRate := ((float64(store.TotalSales) * 100) / float64(monthlysales[store.MonthName]))
 		data[storindx].SalesPercentage = roundFloat(percentageRate, 2)
+
+		conversionRate := ((float64(store.TotalSales) * 100) / float64(store.TotalBrands))
+		data[storindx].SalesConversion = roundFloat(conversionRate, 2)
 	}
 	return data
 }
