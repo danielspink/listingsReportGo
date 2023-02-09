@@ -59,11 +59,11 @@ func makeRowIndxs(xlsx *excelize.File, data []storeNumbers) map[string]map[strin
 			indexes[currentSheet] = make(map[string]tablePosition)
 		}
 
-		indexes[currentSheet]["mainTitle"] = tablePosition{"Listings", 3, Formats["normalTextLeft"], Formats["normalTextLeft"]}
-		indexes[currentSheet]["mainHeader"] = tablePosition{"", 4, Formats["blueTextTop"], Formats["blueTextTop"]}
-		indexes[currentSheet]["mainBottom"] = tablePosition{currentSheet, 5, Formats["blueTextBottom"], Formats["blueTextTop"]}
+		indexes[currentSheet]["mainTitle"] = tablePosition{"Listings", 6, Formats["normalTextLeft"], Formats["normalTextLeft"]}
+		indexes[currentSheet]["mainHeader"] = tablePosition{"", 7, Formats["blueTextTop"], Formats["blueTextTop"]}
+		indexes[currentSheet]["mainBottom"] = tablePosition{currentSheet, 8, Formats["blueTextBottom"], Formats["blueTextTop"]}
 
-		rowIndx := 8
+		rowIndx := 11
 		indexes[currentSheet]["parentTitle"] = tablePosition{"Parents", rowIndx - 1, Formats["normalTextLeft"], Formats["normalTextLeft"]}
 		rowIndx++
 		indexes[currentSheet]["parentHeader"] = tablePosition{"", rowIndx - 1, Formats["purpleTextTop"], Formats["purpleTextTop"]}
@@ -136,7 +136,7 @@ func sortMapValues(inMap map[string]int) []string {
 
 func makeFormats(xlsx *excelize.File) {
 	Formats = map[string]int{
-		"mainTitleCenter":  format(xlsx, "blueTextTop"),
+		"mainTextTop":      format(xlsx, "mainTextTop"),
 		"blueTextTop":      format(xlsx, "blueTextTop"),
 		"blueTextMid":      format(xlsx, "blueTextMid"),
 		"blueTextBottom":   format(xlsx, "blueTextBottom"),

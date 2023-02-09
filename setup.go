@@ -19,7 +19,6 @@ func setup() {
 	loadFlags()
 	processDates()
 	reportColumns()
-
 }
 
 func loadFlags() {

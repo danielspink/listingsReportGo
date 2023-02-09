@@ -4,4 +4,5 @@ func main() {
 	setup()
 	stores := getStoreDataByYear(year)
 	buildReportbase(stores)
+
 }

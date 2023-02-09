@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	_ "image/png"
 	"strconv"
 	"strings"
 
@@ -34,8 +35,13 @@ func buildReportbase(stores []storeNumbers) {
 func makeDataTables(xlsx *excelize.File, sheet string, data storeNumbers, indexes map[string]map[string]tablePosition) {
 	//First Column of the sheet with the product Keynames
 	currentStore := strings.Title(data.Store)
+
 	// BLUE TABLE //
-	insertDataToExcel(xlsx, sheet, "A1", "D1", format(xlsx, "mainTitleCenter"), strings.ToUpper(data.Store))
+	imgLocation := fmt.Sprintf("imgs\\%v.png", currentStore)
+	err := xlsx.AddPicture(currentStore, "A1", imgLocation, `{"x_scale":0.5,"y_scale":0.5}`)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	for _, val := range indexes[currentStore] {
 		insertDataToExcel(xlsx, sheet, "A"+strconv.Itoa(val.Position), "A"+strconv.Itoa(val.Position), val.Format, val.Name)
@@ -185,6 +191,13 @@ func format(xlsx *excelize.File, format string) int {
 		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"center","wrap_text":false}
 	}`)
 	formats["mainTitleCenter"] = mainTitleCenter
+
+	mainTextTop, _ := xlsx.NewStyle(`{
+		"font":{"color":"#ffffff","size":20,"bold":true},
+		"fill":{"type":"pattern","color":["#5b95f9"],"pattern":1},
+		"alignment":{"vertical":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"text_rotation":0,"horizontal":"center","wrap_text":false}
+	}`)
+	formats["mainTextTop"] = mainTextTop
 
 	blueTextTop, _ := xlsx.NewStyle(`{
 		"font":{"color":"#ffffff","size":11,"bold":true},

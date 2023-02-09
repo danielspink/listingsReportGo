@@ -141,7 +141,7 @@ func makeMainSheet(xlsx *excelize.File, data []storeNumbers, mainIndexes map[str
 
 	sheet := "Main"
 	xlsx.SetColWidth(sheet, "A", "A", 25)
-	insertDataToExcel(xlsx, sheet, "B2", "T2", Formats["mainTitleCenter"], "")
+	insertDataToExcel(xlsx, sheet, "A2", "T2", Formats["mainTextTop"], "SUMMARY")
 	for _, tablePos := range mainIndexes {
 		position := "A" + strconv.Itoa(tablePos.Position)
 		insertDataToExcel(xlsx, sheet, position, position, tablePos.Format, tablePos.Name)
